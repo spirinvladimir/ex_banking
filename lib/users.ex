@@ -13,10 +13,7 @@ defmodule Users do
             name,
             %{
                 :load => 0,
-                :account => (fn ->
-                    {:ok, pid} = Agent.start(fn -> %{} end)
-                    pid
-                end).()
+                :account => Account.create()
             }
         )
     end
@@ -29,30 +26,10 @@ defmodule Users do
     end
 
     def read(pid, name) do
-        case Agent.get(pid, fn users ->
-            IO.inspect(users)
-            users[name]
-        end) do
+        case Agent.get(pid, fn users -> users[name] end) do
             nil -> :error
             user -> user
         end
-    end
-
-    def load_user(pid, name) do
-        Agent.get_and_update(pid, fn users ->
-            user = users[name]
-            user = Map.put(user, :load, user[:load] + 1)
-            users = Map.put(users, name, user)
-            {user[:account], users}
-        end)
-    end
-
-    def save_user(pid, name) do
-        Agent.update(pid, fn users ->
-            user = users[name]
-            user = Map.put(user, :load, user[:load] - 1)
-            Map.put(users, name, user)
-        end)
     end
 
 end

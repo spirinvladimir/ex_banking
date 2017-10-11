@@ -13,49 +13,59 @@ defmodule ExBanking do
 
     @spec create_user(user :: String.t) :: :ok | banking_error
     def create_user(name) do
-        pid = Users.agent()
-        case Users.create(pid, name) do
-            :error -> {:error, :user_already_exists}
-            :ok -> :ok
+        case Validate.name(name) do
+            false -> {:error, :wrong_arguments}
+            true ->
+                pid = Users.agent()
+                case Users.create(pid, name) do
+                    :error -> {:error, :user_already_exists}
+                    :ok -> :ok
+                end
         end
     end
 
 
     @spec deposit(user :: String.t, amount :: number, currency :: String.t) :: {:ok, new_balance :: number} | banking_error
     def deposit(name, amount, currency) do
-        pid = Users.agent()
-        case Users.read(pid, name) do
-            :error -> {:error, :user_does_not_exist}
-            user ->
-                case Perfomance.check(user) do
-                    :error -> {:error, :too_many_requests_to_user}
-                    _ -> (fn ->
-                        account = Users.load_user(pid, name)
-                        new_balance = Account.deposit(account, amount, currency)
-                        Users.save_user(pid, name)
-                        {:ok, new_balance}
-                    end).()
+        case Validate.name(name) and Validate.amount(amount) and Validate.currency(currency) do
+            false -> {:error, :wrong_arguments}
+            true ->
+                pid = Users.agent()
+                case Users.read(pid, name) do
+                    :error -> {:error, :user_does_not_exist}
+                    user ->
+                        case Perfomance.check(user) do
+                            :error -> {:error, :too_many_requests_to_user}
+                            _ ->
+                                account = Session.create(pid, name)
+                                new_balance = Account.deposit(account, amount, currency)
+                                Session.delete(pid, name)
+                                {:ok, new_balance}
+                        end
                 end
         end
     end
 
     @spec withdraw(user :: String.t, amount :: number, currency :: String.t) :: {:ok, new_balance :: number} | banking_error
     def withdraw(name, amount, currency) do
-        pid = Users.agent()
-        case Users.read(pid, name) do
-            :error -> {:error, :user_does_not_exist}
-            user ->
-                case Perfomance.check(user) do
-                    :error -> {:error, :too_many_requests_to_user}
-                    _ -> (fn ->
-                        account = Users.load_user(pid, name)
-                        new_balance =  Account.withdraw(account, amount, currency)
-                        Users.save_user(pid, name)
-                        case new_balance do
-                            :error -> {:error, :not_enough_money}
-                            new_balance -> {:ok, new_balance}
+        case Validate.name(name) and Validate.amount(amount) and Validate.currency(currency) do
+            false -> {:error, :wrong_arguments}
+            true ->
+                pid = Users.agent()
+                case Users.read(pid, name) do
+                    :error -> {:error, :user_does_not_exist}
+                    user ->
+                        case Perfomance.check(user) do
+                            :error -> {:error, :too_many_requests_to_user}
+                            _ ->
+                                account = Session.create(pid, name)
+                                new_balance =  Account.withdraw(account, amount, currency)
+                                Session.delete(pid, name)
+                                case new_balance do
+                                    :error -> {:error, :not_enough_money}
+                                    new_balance -> {:ok, new_balance}
+                                end
                         end
-                    end).()
                 end
         end
     end
