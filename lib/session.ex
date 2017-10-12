@@ -3,7 +3,7 @@ defmodule Session do
     def create(pid, name) do
         Agent.get_and_update(pid, fn users ->
             user = users[name]
-            load = users[:load]
+            load = user[:load]
             case Perfomance.check(load) do
                 :error ->
                     {:error, users}

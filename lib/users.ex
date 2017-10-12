@@ -28,10 +28,12 @@ defmodule Users do
     end
 
     def read(pid, name) do
-        case Agent.get(pid, fn users -> users[name] end) do
-            nil -> :error
-            _ -> :ok
-        end
+        Agent.get(pid, fn users ->
+            case users[name] do
+                nil -> :error
+                _ -> :ok
+            end
+        end)
     end
 
 end
