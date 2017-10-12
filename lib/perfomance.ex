@@ -2,8 +2,8 @@ defmodule Perfomance do
 
     @max 10
 
-    def check(user) do
-        if user[:load] < @max do
+    def check(load) do
+        if load < @max do
             :ok
         else
             :error

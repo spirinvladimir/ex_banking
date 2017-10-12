@@ -33,11 +33,10 @@ defmodule ExBanking do
                 pid = Users.agent()
                 case Users.read(pid, name) do
                     :error -> {:error, :user_does_not_exist}
-                    user ->
-                        case Perfomance.check(user) do
+                    :ok ->
+                        case Session.create(pid, name) do
                             :error -> {:error, :too_many_requests_to_user}
-                            _ ->
-                                account = Session.create(pid, name)
+                            account ->
                                 new_balance = Account.deposit(account, amount, currency)
                                 Session.delete(pid, name)
                                 {:ok, new_balance}
@@ -54,11 +53,10 @@ defmodule ExBanking do
                 pid = Users.agent()
                 case Users.read(pid, name) do
                     :error -> {:error, :user_does_not_exist}
-                    user ->
-                        case Perfomance.check(user) do
+                    :ok ->
+                        case Session.create(pid, name) do
                             :error -> {:error, :too_many_requests_to_user}
-                            _ ->
-                                account = Session.create(pid, name)
+                            account ->
                                 new_balance =  Account.withdraw(account, amount, currency)
                                 Session.delete(pid, name)
                                 case new_balance do
@@ -78,11 +76,10 @@ defmodule ExBanking do
                 pid = Users.agent()
                 case Users.read(pid, name) do
                     :error -> {:error, :user_does_not_exist}
-                    user ->
-                        case Perfomance.check(user) do
+                    :ok ->
+                        case Session.create(pid, name) do
                             :error -> {:error, :too_many_requests_to_user}
-                            _ ->
-                                account = Session.create(pid, name)
+                            account ->
                                 balance =  Account.get_balance(account, currency)
                                 Session.delete(pid, name)
                                 {:ok, balance}
@@ -99,18 +96,16 @@ defmodule ExBanking do
                 pid = Users.agent()
                 case Users.read(pid, from_user) do
                     :error -> {:error, :sender_does_not_exist}
-                    sender ->
+                    :ok ->
                         case Users.read(pid, to_user) do
                             :error -> {:error, :receiver_does_not_exist}
-                            receiver ->
-                                case Perfomance.check(sender) do
+                            :ok ->
+                                case Session.create(pid, from_user) do
                                     :error -> {:error, :too_many_requests_to_sender}
-                                    _ ->
-                                        case Perfomance.check(receiver) do
+                                    from_account ->
+                                        case Session.create(pid, to_user) do
                                             :error -> {:error, :too_many_requests_to_receiver}
-                                            _ ->
-                                                from_account = Session.create(pid, from_user)
-                                                to_account = Session.create(pid, to_user)
+                                            to_account ->
                                                 case Account.withdraw(from_account, amount, currency) do
                                                     :error ->
                                                         Session.delete(pid, from_user)

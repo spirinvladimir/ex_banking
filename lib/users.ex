@@ -19,16 +19,18 @@ defmodule Users do
     end
 
     def create(pid, name) do
-        case Agent.get(pid, fn users -> users[name] end) do
-            nil -> Agent.update(pid, fn users -> addNewUser(users, name) end)
-            _ -> :error
-        end
+        Agent.get_and_update(pid, fn users ->
+            case users[name] do
+                nil -> {:ok, addNewUser(users, name)}
+                _ -> {:error, users}
+            end
+        end)
     end
 
     def read(pid, name) do
         case Agent.get(pid, fn users -> users[name] end) do
             nil -> :error
-            user -> user
+            _ -> :ok
         end
     end
 

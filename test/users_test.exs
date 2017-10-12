@@ -22,9 +22,7 @@ defmodule UsersTest do
 
     test "read user", %{pid: pid} do
         assert Users.create(pid, "Jeff") == :ok
-        %{:load => load, :account => account} = Users.read(pid, "Jeff")
-        assert load == 0
-        assert is_pid(account)
+        assert Users.read(pid, "Jeff") == :ok
     end
 
 end
