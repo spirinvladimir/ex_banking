@@ -97,25 +97,40 @@ defmodule ExBanking do
                 case Users.read(pid, from_user) do
                     :error -> {:error, :sender_does_not_exist}
                     :ok ->
-                        case Users.read(pid, to_user) do
-                            :error -> {:error, :receiver_does_not_exist}
-                            :ok ->
+                        case from_user == to_user do
+                            true ->
                                 case Session.create(pid, from_user) do
                                     :error -> {:error, :too_many_requests_to_sender}
-                                    from_account ->
-                                        case Session.create(pid, to_user) do
-                                            :error -> {:error, :too_many_requests_to_receiver}
-                                            to_account ->
-                                                case Account.withdraw(from_account, amount, currency) do
-                                                    :error ->
-                                                        Session.delete(pid, from_user)
-                                                        Session.delete(pid, to_user)
-                                                        {:error, :not_enough_money}
-                                                    from_user_balance ->
-                                                        to_user_balance = Account.deposit(to_account, amount, currency)
-                                                        Session.delete(pid, from_user)
-                                                        Session.delete(pid, to_user)
-                                                        {:ok, from_user_balance, to_user_balance}
+                                    account ->
+                                        balance =  Account.get_balance(account, currency)
+                                        Session.delete(pid, from_user)
+                                        if balance < amount do
+                                            {:error, :not_enough_money}
+                                        else
+                                            {:ok, balance, balance}
+                                        end
+                                end
+                            false ->
+                                case Users.read(pid, to_user) do
+                                    :error -> {:error, :receiver_does_not_exist}
+                                    :ok ->
+                                        case Session.create(pid, from_user) do
+                                            :error -> {:error, :too_many_requests_to_sender}
+                                            from_account ->
+                                                case Session.create(pid, to_user) do
+                                                    :error -> {:error, :too_many_requests_to_receiver}
+                                                    to_account ->
+                                                        case Account.withdraw(from_account, amount, currency) do
+                                                            :error ->
+                                                                Session.delete(pid, from_user)
+                                                                Session.delete(pid, to_user)
+                                                                {:error, :not_enough_money}
+                                                            from_user_balance ->
+                                                                to_user_balance = Account.deposit(to_account, amount, currency)
+                                                                Session.delete(pid, from_user)
+                                                                Session.delete(pid, to_user)
+                                                                {:ok, from_user_balance, to_user_balance}
+                                                        end
                                                 end
                                         end
                                 end
