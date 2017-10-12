@@ -44,4 +44,13 @@ defmodule ExBankingTest do
         assert ExBanking.send("From", "To", 3, "USD") == {:ok, 0, 5}
     end
 
+    test "user can send money to himself" do
+        assert ExBanking.create_user("Greedy") == :ok
+        assert ExBanking.send("Greedy", "Greedy", 1, "USD") == {:error, :not_enough_money}
+        assert ExBanking.get_balance("Greedy", "USD") == {:ok, 0}
+        assert ExBanking.deposit("Greedy", 2, "USD") == {:ok, 2}
+        assert ExBanking.send("Greedy", "Greedy", 1, "USD") == {:ok, 2, 2}
+        assert ExBanking.get_balance("Greedy", "USD") == {:ok, 2}
+    end
+
 end
