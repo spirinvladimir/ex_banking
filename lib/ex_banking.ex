@@ -118,7 +118,9 @@ defmodule ExBanking do
                                             :error -> {:error, :too_many_requests_to_sender}
                                             from_account ->
                                                 case Session.create(pid, to_user) do
-                                                    :error -> {:error, :too_many_requests_to_receiver}
+                                                    :error ->
+                                                        Session.delete(pid, from_user)
+                                                        {:error, :too_many_requests_to_receiver}
                                                     to_account ->
                                                         case Account.withdraw(from_account, amount, currency) do
                                                             :error ->
