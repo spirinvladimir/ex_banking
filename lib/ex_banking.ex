@@ -90,10 +90,43 @@ defmodule ExBanking do
                 end
         end
     end
-"""
-    @spec send(from_user :: String.t, to_user :: String.t, amount :: number, currency :: String.t) :: {:ok, from_user_balance :: number, to_user_balance :: number} | banking_error
-    def send do
 
+    @spec send(from_user :: String.t, to_user :: String.t, amount :: number, currency :: String.t) :: {:ok, from_user_balance :: number, to_user_balance :: number} | banking_error
+    def send(from_user, to_user, amount, currency) do
+        case Validate.name(from_user) and Validate.name(to_user) and Validate.amount(amount) and Validate.currency(currency) do
+            false -> {:error, :wrong_arguments}
+            true ->
+                pid = Users.agent()
+                case Users.read(pid, from_user) do
+                    :error -> {:error, :sender_does_not_exist}
+                    sender ->
+                        case Users.read(pid, to_user) do
+                            :error -> {:error, :receiver_does_not_exist}
+                            receiver ->
+                                case Perfomance.check(sender) do
+                                    :error -> {:error, :too_many_requests_to_sender}
+                                    _ ->
+                                        case Perfomance.check(receiver) do
+                                            :error -> {:error, :too_many_requests_to_receiver}
+                                            _ ->
+                                                from_account = Session.create(pid, from_user)
+                                                to_account = Session.create(pid, to_user)
+                                                case Account.withdraw(from_account, amount, currency) do
+                                                    :error ->
+                                                        Session.delete(pid, from_user)
+                                                        Session.delete(pid, to_user)
+                                                        {:error, :not_enough_money}
+                                                    from_user_balance ->
+                                                        to_user_balance = Account.deposit(to_account, amount, currency)
+                                                        Session.delete(pid, from_user)
+                                                        Session.delete(pid, to_user)
+                                                        {:ok, from_user_balance, to_user_balance}
+                                                end
+                                        end
+                                end
+                        end
+                end
+        end
     end
-"""
+
 end

@@ -40,6 +40,21 @@ defmodule ExBankingTest do
         assert ExBanking.get_balance("Kolyan", "USD") == {:ok, 3}
         assert ExBanking.withdraw("Kolyan", 1, "USD") == {:ok, 2}
         assert ExBanking.get_balance("Kolyan", "USD") == {:ok, 2}
-    end    
+    end
+
+    test "send" do
+        assert ExBanking.create_user("From") == :ok
+        assert ExBanking.create_user("To") == :ok
+        assert ExBanking.deposit("From", 3, "USD") == {:ok, 3}
+        assert ExBanking.deposit("To", 2, "USD") == {:ok, 2}
+        assert ExBanking.send(1, "To", 3, "USD") == {:error, :wrong_arguments}
+        assert ExBanking.send("From", 1, 3, "USD") == {:error, :wrong_arguments}
+        assert ExBanking.send("From", "To", -3, "USD") == {:error, :wrong_arguments}
+        assert ExBanking.send("From", "To", 3, 1) == {:error, :wrong_arguments}
+        assert ExBanking.send("From", "Not-exist-user", 3, "USD") == {:error, :receiver_does_not_exist}
+        assert ExBanking.send("Not-exist-user", "To", 3, "USD") == {:error, :sender_does_not_exist}
+        assert ExBanking.send("From", "To", 4, "USD") == {:error, :not_enough_money}
+        assert ExBanking.send("From", "To", 3, "USD") == {:ok, 0, 5}
+    end
 
 end
