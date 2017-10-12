@@ -5,7 +5,7 @@ defmodule Account do
         account
     end
 
-    defp get_balance(wallet, currency) do
+    defp balance(wallet, currency) do
         if Map.has_key?(wallet, currency) do
             wallet[currency]
         else
@@ -15,7 +15,7 @@ defmodule Account do
 
     def deposit(account, amount, currency) do
         Agent.get_and_update(account, fn wallet ->
-            new_balance = amount + get_balance(wallet, currency)
+            new_balance = amount + balance(wallet, currency)
             wallet = Map.put(wallet, currency, new_balance)
             {new_balance, wallet}
         end)
@@ -23,12 +23,18 @@ defmodule Account do
 
     def withdraw(account, amount, currency) do
         Agent.get_and_update(account, fn wallet ->
-            case get_balance(wallet, currency) - amount do
+            case balance(wallet, currency) - amount do
                 new_balance when new_balance < 0 ->
                     {:error, wallet}
                 new_balance ->
-                    {new_balance, Map.put(wallet, currency, amount)}
+                    {new_balance, Map.put(wallet, currency, new_balance)}
             end
+        end)
+    end
+
+    def get_balance(account, currency) do
+        Agent.get(account, fn wallet ->
+            balance(wallet, currency)
         end)
     end
 

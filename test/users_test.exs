@@ -6,7 +6,7 @@ defmodule UsersTest do
     end
 
     test "create new user", %{pid: pid} do
-        assert Users.create(pid, "John") == :ok
+        assert Users.create(pid, "Teddy") == :ok
     end
 
     test "user already exists", %{pid: pid} do
@@ -14,14 +14,15 @@ defmodule UsersTest do
         assert Users.create(pid, "John") == :error
     end
 
-    test "create two users", %{pid: pid} do
-        assert Users.create(pid, "John") == :ok
+    test "create 3 users", %{pid: pid} do
+        assert Users.create(pid, "Bob") == :ok
         assert Users.create(pid, "Paul") == :ok
+        assert Users.create(pid, "Will") == :ok
     end
 
     test "read user", %{pid: pid} do
-        assert Users.create(pid, "John") == :ok
-        %{:load => load, :account => account} = Users.read(pid, "John")
+        assert Users.create(pid, "Jeff") == :ok
+        %{:load => load, :account => account} = Users.read(pid, "Jeff")
         assert load == 0
         assert is_pid(account)
     end
