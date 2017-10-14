@@ -11,10 +11,7 @@ defmodule Users do
         users
         |> Map.put(
             name,
-            %{
-                :load => 0,
-                :account => Account.create()
-            }
+            %User{account: Account.create()}
         )
     end
 
